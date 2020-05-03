@@ -258,16 +258,6 @@ union RDM_Message
     };
 };
 
-union RDM_Checksum
-{
-    uint16_t checksum;
-    struct
-    {
-        uint8_t csl;
-        uint8_t csh;
-    };
-};
-
 struct RDM_DiscUniqueBranchPD
 {
     RDM_Uid lbound;

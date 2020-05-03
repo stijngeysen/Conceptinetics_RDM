@@ -71,8 +71,8 @@
 // Define which serial port to use as DMX port, only one can be 
 // selected at the time by uncommenting one of the following
 // lines
-//#define USE_DMX_SERIAL_0
-#define USE_DMX_SERIAL_1
+#define USE_DMX_SERIAL_0
+//#define USE_DMX_SERIAL_1
 //#define USE_DMX_SERIAL_2
 //#define USE_DMX_SERIAL_3
 
@@ -270,7 +270,8 @@ class RDM_FrameBuffer : public IFrameBuffer
     protected:
         rdm::rdmState   m_state;       // State for pushing the message in
         RDM_Message     m_msg;
-        RDM_Checksum    m_csRecv;      // Checksum received in rdm message
+        uint16_t    m_csRecv;      // Checksum received in rdm message
+        uint16_t    m_csExp;      // Expected checksum for rdm message
 };
 
 //
@@ -368,7 +369,7 @@ class RDM_Responder : public RDM_FrameBuffer
         uint16_t                    m_DeviceModelId;
         uint8_t                     m_SoftwareVersionId[4]; // 32 bit Software version
         rdm::RdmProductCategory     m_ProductCategory;
- 
+
         char                        m_deviceLabel[32];  // Device label
 
         static void (*event_onIdentifyDevice)(bool);

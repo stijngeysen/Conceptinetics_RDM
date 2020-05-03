@@ -547,13 +547,15 @@ bool RDM_FrameBuffer::processIncoming ( uint8_t val, bool first )
     if ( first )
     {
         m_state = rdm::rdmStartByte;
-        m_csRecv.checksum   = (uint16_t) 0x0000;
+        m_csExp   = 0x0000;
+        m_csRecv  = 0x0000;
         idx = 0;
     }
 
     // Prevent buffer overflow for large messages
-    if (idx >= sizeof(m_msg))
+    if (idx >= sizeof(m_msg)) {
         return true;
+    }
 
     switch ( m_state )
     {
@@ -576,28 +578,29 @@ bool RDM_FrameBuffer::processIncoming ( uint8_t val, bool first )
         case rdm::rdmMessageLength:
             m_msg.msgLength = val;
             m_state = rdm::rdmData;
-            m_csRecv.checksum = 0xcc + 0x01 + val;  // set initial checksum 
+            m_csExp = 0xcc + 0x01 + val;  // set initial checksum 
             idx = 3;                                // buffer index for next byte
             break;
 
         case rdm::rdmData:
             m_msg.d[idx++] = val;
-            m_csRecv.checksum += val;
-            if ( idx >= m_msg.msgLength )
+            m_csExp += val;
+            if ( idx >= m_msg.msgLength ) {
                 m_state = rdm::rdmChecksumHigh;
+            }
             break;
 
         case rdm::rdmChecksumHigh:
-            m_csRecv.csh = val;
+            m_csRecv = val << 8;
             m_state = rdm::rdmChecksumLow;
             
             break;
 
         case rdm::rdmChecksumLow:
-            m_csRecv.csl = val;
+            m_csRecv = m_csRecv | val;
 
-            if ((m_csRecv.checksum % (uint16_t)0x10000) == m_csRecv.checksum)
-            { 
+            if ((m_csExp & 0xFFFF) == m_csRecv)
+            {
                 m_state = rdm::rdmFrameReady;
                 
                 // valid checksum ... start processing
@@ -1003,7 +1006,7 @@ void RDM_Responder::processFrame ( void )
         m_msg.dstUid.copy ( m_msg.srcUid );
         m_msg.srcUid.copy ( m_devid );
 
-        //_delay_us ( MIN_RESPONDER_PACKET_SPACING_USEC );
+        _delay_us ( MIN_RESPONDER_PACKET_SPACING_USEC );
         SetISRMode ( isr::RDMTransmit );
 
      }
