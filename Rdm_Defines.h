@@ -64,7 +64,7 @@ namespace rdm
         // Category - RDM Information
         // ** Only required if supporting parameters 
         //    beyond the minimum required set
-        SupportedParameters             = 0x0005,   // Get, **Required
+        SupportedParameters             = 0x0050,   // Get, **Required
         ParameterDescription            = 0x0051,   // Get, **Required
     
         // Category = Product Information
