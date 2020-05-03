@@ -301,6 +301,13 @@ class RDM_Responder : public RDM_FrameBuffer
             m_Personality           = personality;
         };
 
+        uint16_t getDeviceModelId ( void ) { return m_DeviceModelId; };
+        uint16_t getProductCategory ( void ) { return (uint16_t) m_ProductCategory; };
+        uint8_t getPersonalities ( void ) { return m_Personalities; };
+        uint8_t * getSoftwareVersionId ( void ) { return m_SoftwareVersionId; };
+        char * getDeviceLabel ( void ) { return m_deviceLabel; };
+        char * getDeviceModelDescription ( void ) { return m_deviceModelDescription; };
+
         //
         // Set vendor software version id
         //
@@ -333,6 +340,7 @@ class RDM_Responder : public RDM_FrameBuffer
 
         // Set the device label
         void    setDeviceLabel ( const char *label, size_t len );
+        void    setDeviceModelDescription ( const char *description, size_t len );
 
         // Enable, Disable rdm responder
         void enable ( void )    { m_rdmStatus.enabled = true; m_rdmStatus.mute = false; };
@@ -351,6 +359,7 @@ class RDM_Responder : public RDM_FrameBuffer
 
 
     protected:  
+        void UnsupportedCommandClass ( void );
         virtual void processFrame ( void );
 
         // Discovery to unque brach packets only requires
@@ -371,6 +380,7 @@ class RDM_Responder : public RDM_FrameBuffer
         rdm::RdmProductCategory     m_ProductCategory;
 
         char                        m_deviceLabel[32];  // Device label
+        char                        m_deviceModelDescription[32];  // Device model description
 
         static void (*event_onIdentifyDevice)(bool);
         static void (*event_onDeviceLabelChanged)(const char*, uint8_t);

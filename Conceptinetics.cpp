@@ -714,6 +714,13 @@ void RDM_Responder::setDeviceLabel ( const char *label, size_t len )
 
     memcpy ( (void *)m_deviceLabel, (void *)label, len );
 }
+void RDM_Responder::setDeviceModelDescription ( const char *description, size_t len )
+{
+    if ( len > RDM_MAX_DEVICELABEL_LENGTH )
+        len = RDM_MAX_DEVICELABEL_LENGTH;
+
+    memcpy ( (void *)m_deviceModelDescription, (void *)description, len );
+}
 
 #define UID_0 0x12                                                                                  //ESTA device ID
 #define UID_1 0x34
@@ -819,6 +826,15 @@ void RDM_Responder::populateDeviceInfo ( void )
 
 const uint8_t ManufacturerLabel_P[] PROGMEM = "Conceptinetics"; 
 
+void RDM_Responder::UnsupportedCommandClass( void )
+{
+    // Unsupported Command Class response
+    m_msg.portId    = rdm::ResponseTypeNackReason;
+    m_msg.PD[0]     = rdm::UnsupportedCmdClass;
+    m_msg.PD[1]     = 0x0;
+    m_msg.PDL       = 0x2;
+}
+
 void RDM_Responder::processFrame ( void )
 {
     // If packet is a general broadcast   
@@ -829,6 +845,7 @@ void RDM_Responder::processFrame ( void )
     {
         // Set default response type
         m_msg.portId    = rdm::ResponseTypeAck; 
+        uint8_t pdl = 0;
         
         switch ( BSWAP_16(m_msg.PID) )
         {
@@ -860,19 +877,22 @@ void RDM_Responder::processFrame ( void )
                 // Temporary solution... this will become dynamic
                 // in a later version...
                 //
-                m_msg.PD[0] = HIGHBYTE(rdm::DmxStartAddress);   // MSB
-                m_msg.PD[1] = LOWBYTE (rdm::DmxStartAddress);   // LSB
+                m_msg.PD[pdl++] = HIGHBYTE(rdm::DmxStartAddress);   // MSB
+                m_msg.PD[pdl++] = LOWBYTE (rdm::DmxStartAddress);   // LSB
                 
-                m_msg.PD[2] = HIGHBYTE(rdm::DmxPersonality);
-                m_msg.PD[3] = LOWBYTE (rdm::DmxPersonality);
+                m_msg.PD[pdl++] = HIGHBYTE(rdm::DmxPersonality);
+                m_msg.PD[pdl++] = LOWBYTE (rdm::DmxPersonality);
                 
-                m_msg.PD[4] = HIGHBYTE(rdm::ManufacturerLabel);
-                m_msg.PD[5] = LOWBYTE (rdm::ManufacturerLabel);
+                m_msg.PD[pdl++] = HIGHBYTE(rdm::ManufacturerLabel);
+                m_msg.PD[pdl++] = LOWBYTE (rdm::ManufacturerLabel);
 
-                m_msg.PD[6] = HIGHBYTE(rdm::DeviceLabel);
-                m_msg.PD[7] = LOWBYTE (rdm::DeviceLabel);
+                m_msg.PD[pdl++] = HIGHBYTE(rdm::DeviceLabel);
+                m_msg.PD[pdl++] = LOWBYTE (rdm::DeviceLabel);
 
-                m_msg.PDL   = 0x6;
+                m_msg.PD[pdl++] = HIGHBYTE(rdm::DeviceModelDescription);
+                m_msg.PD[pdl++] = LOWBYTE (rdm::DeviceModelDescription);
+
+                m_msg.PDL   = pdl;
                 break;
 
             // Only for manufacturer specific parameters
@@ -936,6 +956,8 @@ void RDM_Responder::processFrame ( void )
                         event_onIdentifyDevice ( m_rdmStatus.ident );
 
                      m_msg.PDL   = 0x0;
+                } else {
+                    UnsupportedCommandClass();
                 }
                 break;
 
@@ -944,6 +966,8 @@ void RDM_Responder::processFrame ( void )
                 {
                     memcpy_P( (void*)m_msg.PD, ManufacturerLabel_P, sizeof(ManufacturerLabel_P) );
     				m_msg.PDL = sizeof ( ManufacturerLabel_P );
+                } else {
+                    UnsupportedCommandClass();
                 }
                 break;
 
@@ -962,9 +986,20 @@ void RDM_Responder::processFrame ( void )
                     // Notify application
                     if ( event_onDeviceLabelChanged )
                         event_onDeviceLabelChanged ( m_deviceLabel, 32 );
+                } else {
+                    UnsupportedCommandClass();
                 }
                 break;
 
+            case rdm::DeviceModelDescription:
+                if ( m_msg.CC == rdm::GetCommand )
+                {
+                    memcpy ( m_msg.PD, (void*) m_deviceModelDescription, 32 );
+                    m_msg.PDL   = 32;
+                } else {
+                    UnsupportedCommandClass();
+                }
+                break;
 
             default:
                 // Unknown parameter ID response
