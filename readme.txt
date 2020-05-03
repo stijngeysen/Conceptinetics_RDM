@@ -4,9 +4,6 @@ The GIT repo on Sourceforge is not up to date with this snapshot.
 This library has been developed to support the CTC-DRA-13-R2 Isolated DMX-RDM Shield and CTC-DRA-10-1, CTC-DRA-10-R2 Shield on the Arduino platform. 
 However, the use of this library is not limited to the prior mentioned boards. This library works on the principle of using a RS485 driver to drive a DMX line or act as a receiver ( DMX Slave )
 
-If you wish to make additions or find bugs or would like to contribute in any other way then please don't hesitate to contact me via my email address: danny@illogic.nl or use report issues on the Sourceforge project page instead.
-
-
 For information on installing libraries, see: http://arduino.cc/en/Guide/Libraries
 
 
@@ -29,6 +26,13 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 CHANGE LOG:
+
+        - 03-May-2020: (stijngeysen)
+                        Correct PID for SupportedParameters
+                        Corrected RDM checksum handling
+                        Support for DeviceModelDescription
+                        Support for UnsupportedCmdClass
+                        Additional getters and setters to retrieve RDM information
 
 	- 30-Sep-2019: (johnseghersmsft) Incorporated fix described at https://sourceforge.net/p/dmxlibraryforar/tickets/11/
 	               added tests to only set __re_pin as output if not the default -1
