@@ -345,10 +345,12 @@ class RDM_Responder : public RDM_FrameBuffer
         // Enable, Disable rdm responder
         void enable ( void )    { m_rdmStatus.enabled = true; m_rdmStatus.mute = false; };
         void disable ( void )   { m_rdmStatus.enabled = false; };
+        void setSnifferMode ( bool sniffer_mode )   { m_rdmStatus.sniffer_mode = sniffer_mode; };
 
         bool isRdmEnabled( void ) { return m_rdmStatus.enabled; };
         bool isMuted( void ) { return m_rdmStatus.mute; };
         bool isIdentifyOn ( void ) { return m_rdmStatus.ident; };
+        bool isSnifferModeOn ( void ) { return m_rdmStatus.sniffer_mode; };
 
         union
         {
@@ -358,6 +360,7 @@ class RDM_Responder : public RDM_FrameBuffer
                 uint8_t mute:1; 
                 uint8_t ident:1;
                 uint8_t enabled:1;  // Rdm responder enable/disable
+                uint8_t sniffer_mode:1; // In sniffer mode, no packets will be transmitted
             };
         } m_rdmStatus;
 

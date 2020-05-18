@@ -461,7 +461,7 @@ DMX_FrameBuffer &DMX_Slave::getBuffer ( void )
     return reinterpret_cast<DMX_FrameBuffer&>(*this);
 }
 
-    uint8_t DMX_Slave::getChannelValue ( uint16_t channel )
+uint8_t DMX_Slave::getChannelValue ( uint16_t channel )
 {
     return getSlotValue ( channel );
 }
@@ -694,6 +694,9 @@ RDM_Responder::RDM_Responder ( uint16_t m, uint8_t d1, uint8_t d2,
 
     // Rdm responder is disabled by default
     m_rdmStatus.enabled = false;
+
+    // Rdm Sniffer Mode is disabled by default
+    m_rdmStatus.sniffer_mode = false;
 }
 
 RDM_Responder::~RDM_Responder ( void )
@@ -747,6 +750,9 @@ void RDM_Responder::setDeviceModelDescription ( const char *description, size_t 
 
 void RDM_Responder::repondDiscUniqueBranch ( void )
 {
+    if (m_rdmStatus.sniffer_mode)
+        goto end;
+
     DMX_UCSRB |= (1<<DMX_TXEN);
 
     uint16_t cs = 0;
@@ -797,7 +803,7 @@ void RDM_Responder::repondDiscUniqueBranch ( void )
     // TODO:...
     // 2017, Feb 28: Removed delay, not required.
     //    _delay_us (100);
-
+end:
     // Restore ISR operations
     ::SetISRMode ( isr::Receive );
 }
@@ -980,7 +986,7 @@ void RDM_Responder::processFrame ( void )
                     memset ( (void*) m_deviceLabel, ' ', 32 );
                     memcpy ( (void*) m_deviceLabel, m_msg.PD, (m_msg.PDL < 32 ? m_msg.PDL : 32) );
                     m_msg.PDL   = 0;
-                
+
                     // Notify application
                     if ( event_onDeviceLabelChanged )
                         event_onDeviceLabelChanged ( m_deviceLabel, 32 );
@@ -1012,7 +1018,7 @@ void RDM_Responder::processFrame ( void )
     //
     // Only respond if this this message
     // was destined to us only
-    if ( m_msg.dstUid == m_devid )
+    if ( m_msg.dstUid == m_devid && !m_rdmStatus.sniffer_mode)
     {
         m_msg.startCode     = RDM_START_CODE;
         m_msg.subStartCode  = 0x01;
