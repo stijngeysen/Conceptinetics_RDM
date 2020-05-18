@@ -346,6 +346,10 @@ class RDM_Responder : public RDM_FrameBuffer
         void enable ( void )    { m_rdmStatus.enabled = true; m_rdmStatus.mute = false; };
         void disable ( void )   { m_rdmStatus.enabled = false; };
 
+        bool isRdmEnabled( void ) { return m_rdmStatus.enabled; };
+        bool isMuted( void ) { return m_rdmStatus.mute; };
+        bool isIdentifyOn ( void ) { return m_rdmStatus.ident; };
+
         union
         {
             uint8_t  raw;
