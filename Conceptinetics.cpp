@@ -75,6 +75,12 @@
       #define DMX_UCSRA UCSR0A
     #endif
 
+    #if defined(UDRE)
+      #define DMX_UDRE UDRE
+    #elif defined(UDRE0)
+      #define DMX_UDRE UDRE0
+    #endif
+
     #if defined(UCSRB)
        #define DMX_UCSRB UCSRB
     #elif defined (UCSR0B)
@@ -84,9 +90,11 @@
     #if defined(TXEN) && defined(TXCIE)
         #define DMX_TXEN TXEN
         #define DMX_TXCIE TXCIE
+        #define DMX_TXC TXC
     #elif defined(TXEN0) && defined(TXCIE0)
         #define DMX_TXEN TXEN0
         #define DMX_TXCIE TXCIE0
+        #define DMX_TXC TXC0
     #endif
 
     #if defined(RXEN) && defined(RXCIE)
@@ -114,8 +122,10 @@
     #define DMX_UBRRL UBRR1L
     #define DMX_UCSRA UCSR1A
     #define DMX_UCSRB UCSR1B
+    #define DMX_UDRE  UDRE1
     #define DMX_TXEN TXEN1
     #define DMX_TXCIE TXCIE1
+    #define DMX_TXC TXC1
     #define DMX_RXEN RXEN1
     #define DMX_RXCIE RXCIE1
     #define DMX_FE FE1
@@ -129,8 +139,10 @@
     #define DMX_UBRRL UBRR2L
     #define DMX_UCSRA UCSR2A
     #define DMX_UCSRB UCSR2B
+    #define DMX_UDRE  UDRE2
     #define DMX_TXEN TXEN2
     #define DMX_TXCIE TXCIE2
+    #define DMX_TXC TXC2
     #define DMX_RXEN RXEN2
     #define DMX_RXCIE RXCIE2
     #define DMX_FE FE2
@@ -144,8 +156,10 @@
     #define DMX_UBRRL UBRR3L
     #define DMX_UCSRA UCSR3A
     #define DMX_UCSRB UCSR3B
+    #define DMX_UDRE  UDRE3
     #define DMX_TXEN TXEN3
     #define DMX_TXCIE TXCIE3
+    #define DMX_TXC TXC3
     #define DMX_RXEN RXEN3
     #define DMX_RXCIE RXCIE3
     #define DMX_FE FE3
@@ -733,11 +747,7 @@ void RDM_Responder::setDeviceModelDescription ( const char *description, size_t 
 
 void RDM_Responder::repondDiscUniqueBranch ( void )
 {
-    #if defined(UCSRB)
-	UCSRB  = (1<<TXEN);								
-    #elif defined(UCSR0B)
-	UCSR0B = (1<<TXEN0);
-    #endif 
+    DMX_UCSRB |= (1<<DMX_TXEN);
 
     uint16_t cs = 0;
 
@@ -776,25 +786,13 @@ void RDM_Responder::repondDiscUniqueBranch ( void )
     for ( int i=0; i<24; i++ )
     {
         // Wait until data register is empty
-        #if defined (UCSR0A) && defined (UDRE0)
-        while((UCSR0A & (1 <<UDRE0)) == 0);	
-        #elif defined (UCSRA) && defined (UDRE)
-        while((UCSRA & (1 <<UDRE)) == 0);	
-        #endif
-        
+        while((DMX_UCSRA & (1 << DMX_UDRE)) == 0);
+
         DMX_UDR = response[i];
     }
 
     // Wait until last byte is send
-    #if defined (UCSR0A) && defined (UDRE0)
-    //while((UCSR0A & (1 <<UDRE0)) == 0);	
-    // Fix 2017, 28 feb: Test if last byte has been shifted out completely
-    while (( UCSR0A & (1 <<TXC0) ) == 0 );
-    #elif defined (UCSRA) && defined (UDRE)
-    //while((UCSRA & (1 <<UDRE)) == 0);	
-    while (( UCSRA & (1 <<TXC) ) == 0 );
-    #endif
-
+    while (( DMX_UCSRA & (1 << DMX_TXC) ) == 0 );
 
     // TODO:...
     // 2017, Feb 28: Removed delay, not required.
@@ -1070,11 +1068,6 @@ void SetISRMode ( isr::isrMode mode )
     {
         case isr::Disabled:
             // Updating per https://sourceforge.net/p/dmxlibraryforar/tickets/11/
-            // #if defined(UCSRB)
-            //     UCSRB  = 0x0;
-            // #elif defined(UCSR0B)
-        	//     UCSR0B = 0x0;
-            // #endif    
             DMX_UCSRB = 0x0;
             readEnable = LOW;
             break;
